@@ -20,7 +20,9 @@ TOOLSPATH = ../../../tools   # on Linux
 LIBRARYPATH = ../../../../libraries
 
 # path location for the arm-none-eabi compiler
-COMPILERPATH = ../../../tools/arm-none-eabi/bin
+#COMPILERPATH = ../../../tools/arm-none-eabi/bin
+#COMPILERPATH = /Users/doug/arm-baremetal-gcc-4.7.2/bin
+COMPILERPATH = /Applications/Arduino-beta4.app/Contents/Resources/Java/hardware/tools/arm-none-eabi/bin
 
 #************************************************************************
 # Settings below this point usually do not need to be edited
