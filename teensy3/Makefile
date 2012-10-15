@@ -1,6 +1,7 @@
 
 # The name of your project (used to name the compiled .hex file)
-TARGET = main
+#TARGET = main
+TARGET=tc10
 
 # configurable options
 OPTIONS = -DF_CPU=48000000 -DUSB_SERIAL -DLAYOUT_US_ENGLISH
@@ -15,6 +16,7 @@ OPTIONS = -DF_CPU=48000000 -DUSB_SERIAL -DLAYOUT_US_ENGLISH
 # path location for Teensy Loader, teensy_post_compile and teensy_reboot
 TOOLSPATH = ../../../tools   # on Linux
 #TOOLSPATH = ../../../tools/avr/bin   # on Mac or Windows
+TOOLSPATH = /Applications/Arduino-beta4.app/Contents/Resources/Java/hardware/tools/arm-none-eabi/bin
 
 # path location for Arduino libraries (currently not used)
 LIBRARYPATH = ../../../../libraries

@@ -1,6 +1,6 @@
 #include "WProgram.h"
 
-int main(void)
+int Xmain(void)
 {
 	_init_Teensyduino_internal_();
 
