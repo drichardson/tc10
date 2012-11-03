@@ -16,7 +16,7 @@ OPTIONS = -DF_CPU=48000000 -DUSB_SERIAL -DLAYOUT_US_ENGLISH
 # path location for Teensy Loader, teensy_post_compile and teensy_reboot
 TOOLSPATH = ../../../tools   # on Linux
 #TOOLSPATH = ../../../tools/avr/bin   # on Mac or Windows
-TOOLSPATH = /Applications/Arduino-beta4.app/Contents/Resources/Java/hardware/tools/arm-none-eabi/bin
+TOOLSPATH = /Applications/Arduino-teensy3-beta6.app/Contents/Resources/Java/hardware/tools/arm-none-eabi/bin
 
 # path location for Arduino libraries (currently not used)
 LIBRARYPATH = ../../../../libraries
@@ -24,7 +24,7 @@ LIBRARYPATH = ../../../../libraries
 # path location for the arm-none-eabi compiler
 #COMPILERPATH = ../../../tools/arm-none-eabi/bin
 #COMPILERPATH = /Users/doug/arm-baremetal-gcc-4.7.2/bin
-COMPILERPATH = /Applications/Arduino-beta4.app/Contents/Resources/Java/hardware/tools/arm-none-eabi/bin
+COMPILERPATH = $(TOOLSPATH)
 
 #************************************************************************
 # Settings below this point usually do not need to be edited
