@@ -1,8 +1,9 @@
-#include "mk20dx128.h"
-//#include "serial.h"
 #include "usb_dev.h"
 #include "usb_serial.h"
+#include "core_pins.h" // for yield()
+//#include "HardwareSerial.h"
 
+#if defined(CDC_STATUS_INTERFACE) && defined(CDC_DATA_INTERFACE)
 
 uint8_t usb_cdc_line_coding[7];
 uint8_t usb_cdc_line_rtsdtr;
@@ -178,6 +179,7 @@ int usb_serial_write(const void *buffer, uint32_t size)
 					transmit_previous_timeout = 1;
 					return -1;
 				}
+				yield();
 			}
 		}
 		transmit_previous_timeout = 0;
@@ -225,7 +227,7 @@ void usb_serial_flush_output(void)
 	// while (usb_tx_byte_count(CDC_TX_ENDPOINT) > 0) ; // wait
 }
 
-void usb_flush_callback(void)
+void usb_serial_flush_callback(void)
 {
 	if (tx_noautoflush) return;
 	//serial_print("usb_flush_callback \n");
@@ -260,4 +262,4 @@ void usb_flush_callback(void)
 
 
 
-
+#endif

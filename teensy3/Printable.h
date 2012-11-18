@@ -20,7 +20,20 @@
 #ifndef Printable_h
 #define Printable_h
 
-//#include "new.h"
+#ifdef __cplusplus
+
+inline void * operator new(unsigned int size) __attribute__((always_inline, unused));
+inline void * operator new(unsigned int size)
+{
+	return malloc(size);
+}
+
+inline void operator delete(void * ptr) __attribute__((always_inline, unused));
+inline void operator delete(void * ptr)
+{
+	free(ptr);
+}
+
 
 class Print;
 
@@ -35,4 +48,6 @@ class Printable
     virtual size_t printTo(Print& p) const = 0;
 };
 
+
+#endif
 #endif

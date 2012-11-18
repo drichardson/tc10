@@ -1,8 +1,9 @@
 #ifndef USBserial_h_
 #define USBserial_h_
 
+#if defined(USB_SERIAL)
+
 #include <inttypes.h>
-#include "serial.h"
 
 // C language implementation
 #ifdef __cplusplus
@@ -56,4 +57,5 @@ extern usb_serial_class Serial;
 
 #endif // __cplusplus
 
-#endif
+#endif // USB_SERIAL
+#endif // USBserial_h_

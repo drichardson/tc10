@@ -1,5 +1,5 @@
-#include "analog.h"
-//#include "serial.h"
+#include "core_pins.h"
+//#include "HardwareSerial.h"
 
 static uint8_t calibrating;
 
@@ -8,7 +8,7 @@ void analog_init(void)
 	VREF_TRM = 0x60;
 	VREF_SC = 0xE1;		// enable 1.2 volt ref
 
-	SIM_SCGC6 |= SIM_SCGC6_ADC0;
+	// SIM_SCGC6 |= SIM_SCGC6_ADC0;
 #if F_BUS == 48000000
 	ADC0_CFG1 = ADC_CFG1_ADIV(3) + ADC_CFG1_ADLSMP + ADC_CFG1_MODE(3) + ADC_CFG1_ADICLK(1);
 #elif F_BUS == 24000000

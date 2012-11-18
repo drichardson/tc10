@@ -1,6 +1,6 @@
 #include "mk20dx128.h"
 #include <stdint.h>
-#include "serial.h"
+// #include "HardwareSerial.h"
 
 // The EEPROM is really RAM with a hardware-based backup system to
 // flash memory.  Selecting a smaller size EEPROM allows more wear

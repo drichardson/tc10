@@ -19,11 +19,28 @@ void usb_tx_isr(uint32_t endpoint, usb_packet_t *packet);
 
 extern volatile uint8_t usb_configuration;
 
-#if defined(CDC_RX_ENDPOINT) && defined(CDC_TX_ENDPOINT)
+#ifdef CDC_DATA_INTERFACE
 extern uint8_t usb_cdc_line_coding[7];
 extern uint8_t usb_cdc_line_rtsdtr;
 extern volatile uint8_t usb_cdc_transmit_flush_timer;
+extern void usb_serial_flush_callback(void);
 #endif
+
+#ifdef SEREMU_INTERFACE
+extern volatile uint8_t usb_seremu_transmit_flush_timer;
+extern void usb_seremu_flush_callback(void);
+#endif
+
+#ifdef KEYBOARD_INTERFACE
+extern uint8_t keyboard_modifier_keys;
+extern uint8_t keyboard_keys[6];
+extern uint8_t keyboard_protocol;
+extern uint8_t keyboard_idle_config;
+extern uint8_t keyboard_idle_count;
+extern volatile uint8_t keyboard_leds;
+#endif
+
+
 
 #ifdef __cplusplus
 }

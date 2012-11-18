@@ -620,7 +620,27 @@ void analogWrite(uint8_t pin, int val);
 void attachInterrupt(uint8_t pin, void (*function)(void), int mode);
 void detachInterrupt(uint8_t pin);
 void _init_Teensyduino_internal_(void);
-#include "analog.h"
+
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+int analogRead(uint8_t pin);
+void analogReference(uint8_t type);
+void analogReadRes(unsigned int bits);
+void analog_init(void);
+#ifdef __cplusplus
+}
+#endif
+
+#define DEFAULT         0
+#define INTERNAL        2
+#define INTERNAL1V2     2
+#define INTERNAL1V1     2
+#define EXTERNAL        0
+
+int touchRead(uint8_t pin);
+
 
 static inline void shiftOut(uint8_t, uint8_t, uint8_t, uint8_t) __attribute__((always_inline, unused));
 extern void _shiftOut(uint8_t dataPin, uint8_t clockPin, uint8_t bitOrder, uint8_t value) __attribute__((noinline));
@@ -661,14 +681,16 @@ static inline uint8_t shiftIn(uint8_t dataPin, uint8_t clockPin, uint8_t bitOrde
 void _reboot_Teensyduino_(void) __attribute__((noreturn));
 void _restart_Teensyduino_(void) __attribute__((noreturn));
 
+void yield(void);
+
 void delay(uint32_t msec);
 
-extern volatile uint32_t timer0_millis_count;
+extern volatile uint32_t systick_millis_count;
 
 static inline uint32_t millis(void) __attribute__((always_inline, unused));
 static inline uint32_t millis(void)
 {
-	return timer0_millis_count; // single aligned 32 bit is atomic;
+	return systick_millis_count; // single aligned 32 bit is atomic;
 }
 
 uint32_t micros(void);
@@ -691,13 +713,34 @@ static inline void delayMicroseconds(uint32_t usec)
 	);
 }
 
-
-
-
 #ifdef __cplusplus
 }
 #endif
 
+
+
+
+
+
+
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+unsigned long rtc_get(void);
+void rtc_set(unsigned long t);
+void rtc_compensate(int adjust);
+#ifdef __cplusplus
+}
+class teensy3_clock_class
+{
+public:
+	static unsigned long get(void) __attribute__((always_inline)) { return rtc_get(); }
+	static void set(unsigned long t) __attribute__((always_inline)) { rtc_set(t); }
+	static void compensate(int adj) __attribute__((always_inline)) { rtc_compensate(adj); }
+};
+extern teensy3_clock_class Teensy3Clock;
+#endif
 
 
 

@@ -2,7 +2,7 @@
 #define Print_h
 
 #include <inttypes.h>
-#include <stdio.h> // for size_t
+#include <stdio.h> // for size_t - gives sprintf and other stuff to all sketches & libs
 #include "core_id.h"
 #include "WString.h"
 #include "Printable.h"

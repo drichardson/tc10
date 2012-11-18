@@ -1,4 +1,4 @@
-#include "nonstd.h"
+#include "avr_functions.h"
 #include <string.h>
 
 size_t strlen(const char *s)

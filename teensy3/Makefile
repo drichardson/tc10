@@ -1,7 +1,6 @@
 
 # The name of your project (used to name the compiled .hex file)
-#TARGET = main
-TARGET=tc10
+TARGET = main
 
 # configurable options
 OPTIONS = -DF_CPU=48000000 -DUSB_SERIAL -DLAYOUT_US_ENGLISH
@@ -13,18 +12,16 @@ OPTIONS = -DF_CPU=48000000 -DUSB_SERIAL -DLAYOUT_US_ENGLISH
 # locations and edit the pathnames.  The rest of Arduino is not needed.
 #************************************************************************
 
+TEENSY_BASE=/Applications/Teensy-beta8.app
+
 # path location for Teensy Loader, teensy_post_compile and teensy_reboot
-TOOLSPATH = ../../../tools   # on Linux
-#TOOLSPATH = ../../../tools/avr/bin   # on Mac or Windows
-TOOLSPATH = /Applications/Teensy-beta8.app/Contents/Resources/Java/hardware/tools/arm-none-eabi/bin
+TOOLSPATH=$(TEENSY_BASE)/Contents/Resources/Java/hardware/tools
 
 # path location for Arduino libraries (currently not used)
-LIBRARYPATH = ../../../../libraries
+LIBRARYPATH=$(TEENSY_BASE)/Contents/Resources/Java/libraries
 
 # path location for the arm-none-eabi compiler
-#COMPILERPATH = ../../../tools/arm-none-eabi/bin
-#COMPILERPATH = /Users/doug/arm-baremetal-gcc-4.7.2/bin
-COMPILERPATH = $(TOOLSPATH)
+COMPILERPATH=$(TEENSY_BASE)/Contents/Resources/Java/hardware/tools/arm-none-eabi/bin
 
 #************************************************************************
 # Settings below this point usually do not need to be edited
@@ -61,10 +58,6 @@ OBJS := $(C_FILES:.c=.o) $(CPP_FILES:.cpp=.o)
 
 # the actual makefile rules (all .o files built by GNU make's default implicit rules)
 
-install: all
-	$(abspath $(TOOLSPATH))/teensy_post_compile -file=$(TARGET) -path=$(shell pwd) -tools=$(abspath $(TOOLSPATH))
-	-$(abspath $(TOOLSPATH))/teensy_reboot
-
 all: $(TARGET).hex
 
 $(TARGET).elf: $(OBJS) mk20dx128.ld
@@ -73,6 +66,8 @@ $(TARGET).elf: $(OBJS) mk20dx128.ld
 %.hex: %.elf
 	$(SIZE) $<
 	$(OBJCOPY) -O ihex -R .eeprom $< $@
+	$(abspath $(TOOLSPATH))/teensy_post_compile -file=$(basename $@) -path=$(shell pwd) -tools=$(abspath $(TOOLSPATH))
+	-$(abspath $(TOOLSPATH))/teensy_reboot
 
 
 # compiler generated dependency info

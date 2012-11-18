@@ -799,8 +799,26 @@ extern "C" {
 #define RTC_TPR                 *(volatile uint32_t *)0x4003D004 // RTC Time Prescaler Register
 #define RTC_TAR                 *(volatile uint32_t *)0x4003D008 // RTC Time Alarm Register
 #define RTC_TCR                 *(volatile uint32_t *)0x4003D00C // RTC Time Compensation Register
+#define RTC_TCR_CIC(n)			(((n) & 255) << 24)		// Compensation Interval Counter
+#define RTC_TCR_TCV(n)			(((n) & 255) << 16)		// Time Compensation Value
+#define RTC_TCR_CIR(n)			(((n) & 255) << 8)		// Compensation Interval Register
+#define RTC_TCR_TCR(n)			(((n) & 255) << 0)		// Time Compensation Register
 #define RTC_CR                  *(volatile uint32_t *)0x4003D010 // RTC Control Register
+#define RTC_CR_SC2P			(uint32_t)0x00002000		// 
+#define RTC_CR_SC4P			(uint32_t)0x00001000		// 
+#define RTC_CR_SC8P			(uint32_t)0x00000800		// 
+#define RTC_CR_SC16P			(uint32_t)0x00000400		// 
+#define RTC_CR_CLKO			(uint32_t)0x00000200		// 
+#define RTC_CR_OSCE			(uint32_t)0x00000100		// 
+#define RTC_CR_UM			(uint32_t)0x00000008		// 
+#define RTC_CR_SUP			(uint32_t)0x00000004		// 
+#define RTC_CR_WPE			(uint32_t)0x00000002		// 
+#define RTC_CR_SWR			(uint32_t)0x00000001		// 
 #define RTC_SR                  *(volatile uint32_t *)0x4003D014 // RTC Status Register
+#define RTC_SR_TCE			(uint32_t)0x00000010		// 
+#define RTC_SR_TAF			(uint32_t)0x00000004		// 
+#define RTC_SR_TOF			(uint32_t)0x00000002		// 
+#define RTC_SR_TIF			(uint32_t)0x00000001		// 
 #define RTC_LR                  *(volatile uint32_t *)0x4003D018 // RTC Lock Register
 #define RTC_IER                 *(volatile uint32_t *)0x4003D01C // RTC Interrupt Enable Register
 #define RTC_WAR                 *(volatile uint32_t *)0x4003D800 // RTC Write Access Register
@@ -958,11 +976,11 @@ extern "C" {
 #define SPI_MCR_HALT			(uint32_t)0x00000001		// 
 #define SPI0_TCR                *(volatile uint32_t *)0x4002C008 // DSPI Transfer Count Register
 #define SPI0_CTAR0              *(volatile uint32_t *)0x4002C00C // DSPI Clock and Transfer Attributes Register, In Master Mode
-#define SPI_CTAR_DBR			(uint32_t)0x00000000		// Double Baud Rate
+#define SPI_CTAR_DBR			(uint32_t)0x80000000		// Double Baud Rate
 #define SPI_CTAR_FMSZ(n)		(((n) & 15) << 27)		// Frame Size (+1)
-#define SPI_CTAR_CPOL			(uint32_t)0x00000000		// Clock Polarity
-#define SPI_CTAR_CPHA			(uint32_t)0x00000000		// Clock Phase
-#define SPI_CTAR_LSBFE			(uint32_t)0x00000000		// LSB First
+#define SPI_CTAR_CPOL			(uint32_t)0x04000000		// Clock Polarity
+#define SPI_CTAR_CPHA			(uint32_t)0x02000000		// Clock Phase
+#define SPI_CTAR_LSBFE			(uint32_t)0x01000000		// LSB First
 #define SPI_CTAR_PCSSCK(n)		(((n) & 3) << 22)		// PCS to SCK Delay Prescaler
 #define SPI_CTAR_PASC(n)		(((n) & 3) << 20)		// After SCK Delay Prescaler
 #define SPI_CTAR_PDT(n)			(((n) & 3) << 18)		// Delay after Transfer Prescaler
@@ -998,9 +1016,31 @@ extern "C" {
 #define I2C0_A1                 *(volatile uint8_t  *)0x40066000 // I2C Address Register 1
 #define I2C0_F                  *(volatile uint8_t  *)0x40066001 // I2C Frequency Divider register
 #define I2C0_C1                 *(volatile uint8_t  *)0x40066002 // I2C Control Register 1
+#define I2C_C1_IICEN			(uint8_t)0x80			// I2C Enable
+#define I2C_C1_IICIE			(uint8_t)0x40			// I2C Interrupt Enable
+#define I2C_C1_MST			(uint8_t)0x20			// Master Mode Select
+#define I2C_C1_TX			(uint8_t)0x10			// Transmit Mode Select
+#define I2C_C1_TXAK			(uint8_t)0x08			// Transmit Acknowledge Enable
+#define I2C_C1_RSTA			(uint8_t)0x04			// Repeat START
+#define I2C_C1_WUEN			(uint8_t)0x02			// Wakeup Enable
+#define I2C_C1_DMAEN			(uint8_t)0x01			// DMA Enable
 #define I2C0_S                  *(volatile uint8_t  *)0x40066003 // I2C Status register
+#define I2C_S_TCF			(uint8_t)0x80			// Transfer Complete Flag
+#define I2C_S_IAAS			(uint8_t)0x40			// Addressed As A Slave
+#define I2C_S_BUSY			(uint8_t)0x20			// Bus Busy
+#define I2C_S_ARBL			(uint8_t)0x10			// Arbitration Lost
+#define I2C_S_RAM			(uint8_t)0x08			// Range Address Match
+#define I2C_S_SRW			(uint8_t)0x04			// Slave Read/Write
+#define I2C_S_IICIF			(uint8_t)0x02			// Interrupt Flag
+#define I2C_S_RXAK			(uint8_t)0x01			// Receive Acknowledge
 #define I2C0_D                  *(volatile uint8_t  *)0x40066004 // I2C Data I/O register
 #define I2C0_C2                 *(volatile uint8_t  *)0x40066005 // I2C Control Register 2
+#define I2C_C2_GCAEN			(uint8_t)0x80			// General Call Address Enable
+#define I2C_C2_ADEXT			(uint8_t)0x40			// Address Extension
+#define I2C_C2_HDRS			(uint8_t)0x20			// High Drive Select
+#define I2C_C2_SBRC			(uint8_t)0x10			// Slave Baud Rate Control
+#define I2C_C2_RMEN			(uint8_t)0x08			// Range Address Matching Enable
+#define I2C_C2_AD(n)			((n) & 7)			// Slave Address, upper 3 bits
 #define I2C0_FLT                *(volatile uint8_t  *)0x40066006 // I2C Programmable Input Glitch Filter register
 #define I2C0_RA                 *(volatile uint8_t  *)0x40066007 // I2C Range Address register
 #define I2C0_SMB                *(volatile uint8_t  *)0x40066008 // I2C SMBus Control and Status register
@@ -1052,6 +1092,11 @@ extern "C" {
 #define UART_PFIFO_TXFE			(uint8_t)0x80
 #define UART_PFIFO_RXFE			(uint8_t)0x08
 #define UART0_CFIFO             *(volatile uint8_t  *)0x4006A011 // UART FIFO Control Register
+#define UART_CFIFO_TXFLUSH		(uint8_t)0x80			// 
+#define UART_CFIFO_RXFLUSH		(uint8_t)0x40			// 
+#define UART_CFIFO_RXOFE		(uint8_t)0x04			// 
+#define UART_CFIFO_TXOFE		(uint8_t)0x02			// 
+#define UART_CFIFO_RXUFE		(uint8_t)0x01			// 
 #define UART0_SFIFO             *(volatile uint8_t  *)0x4006A012 // UART FIFO Status Register
 #define UART_SFIFO_TXEMPT		(uint8_t)0x80
 #define UART_SFIFO_RXEMPT		(uint8_t)0x40
@@ -1241,7 +1286,28 @@ extern "C" {
 
 // Chapter 48: Touch sense input (TSI)
 #define TSI0_GENCS              *(volatile uint32_t *)0x40045000 // General Control and Status Register
+#define TSI_GENCS_LPCLKS		(uint32_t)0x10000000		// 
+#define TSI_GENCS_LPSCNITV(n)		(((n) & 15) << 24)		// 
+#define TSI_GENCS_NSCN(n)		(((n) & 31) << 19)		// 
+#define TSI_GENCS_PS(n)			(((n) & 7) << 16)		// 
+#define TSI_GENCS_EOSF			(uint32_t)0x00008000		// 
+#define TSI_GENCS_OUTRGF		(uint32_t)0x00004000		// 
+#define TSI_GENCS_EXTERF		(uint32_t)0x00002000		// 
+#define TSI_GENCS_OVRF			(uint32_t)0x00001000		// 
+#define TSI_GENCS_SCNIP			(uint32_t)0x00000200		// 
+#define TSI_GENCS_SWTS			(uint32_t)0x00000100		// 
+#define TSI_GENCS_TSIEN			(uint32_t)0x00000080		// 
+#define TSI_GENCS_TSIIE			(uint32_t)0x00000040		// 
+#define TSI_GENCS_ERIE			(uint32_t)0x00000020		// 
+#define TSI_GENCS_ESOR			(uint32_t)0x00000010		// 
+#define TSI_GENCS_STM			(uint32_t)0x00000002		// 
+#define TSI_GENCS_STPE			(uint32_t)0x00000001		// 
 #define TSI0_SCANC              *(volatile uint32_t *)0x40045004 // SCAN Control Register
+#define TSI_SCANC_REFCHRG(n)		(((n) & 15) << 24)		// 
+#define TSI_SCANC_EXTCHRG(n)		(((n) & 7) << 16)		// 
+#define TSI_SCANC_SMOD(n)		(((n) & 255) << 8)		// 
+#define TSI_SCANC_AMCLKS(n)		(((n) & 3) << 3)		// 
+#define TSI_SCANC_AMPSC(n)		(((n) & 7) << 0)		// 
 #define TSI0_PEN                *(volatile uint32_t *)0x40045008 // Pin Enable Register
 #define TSI0_WUCNTR             *(volatile uint32_t *)0x4004500C // Wake-Up Channel Counter Register
 #define TSI0_CNTR1              *(volatile uint32_t *)0x40045100 // Counter Register

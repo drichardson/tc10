@@ -1,6 +1,5 @@
 #include "mk20dx128.h"
-//#include "clock.h"
-//#include "serial.h"
+//#include "HardwareSerial.h"
 #include "usb_dev.h"
 #include "usb_mem.h"
 
@@ -205,6 +204,7 @@ static void usb_setup(void)
 		// TODO: do we need to clear the data toggle here?
 		break;
 	  case 0x0680: // GET_DESCRIPTOR
+	  case 0x0681:
 		//serial_print("desc:");
 		//serial_phex16(setup.wValue);
 		//serial_print("\n");
@@ -235,7 +235,7 @@ static void usb_setup(void)
 		//serial_print("desc: not found\n");
 		endpoint0_stall();
 		return;
-#if defined(CDC_RX_ENDPOINT) && defined(CDC_TX_ENDPOINT)
+#if defined(CDC_STATUS_INTERFACE)
 	  case 0x2221: // CDC_SET_CONTROL_LINE_STATE
 		usb_cdc_line_rtsdtr = setup.wValue;
 		//serial_print("set control line state\n");
@@ -243,6 +243,16 @@ static void usb_setup(void)
 	  case 0x2021: // CDC_SET_LINE_CODING
 		//serial_print("set coding, waiting...\n");
 		return;
+#endif
+
+// TODO: this does not work... why?
+#if defined(SEREMU_INTERFACE) || defined(KEYBOARD_INTERFACE)
+	  case 0x0921: // HID SET_REPORT
+		//serial_print(":)\n");
+		return;
+	  case 0x0A21: // HID SET_IDLE
+		break;
+	  // case 0xC940:
 #endif
 	  default:
 		endpoint0_stall();
@@ -296,7 +306,7 @@ static void usb_setup(void)
 static void usb_control(uint32_t stat)
 {
 	bdt_t *b;
-	uint32_t i, pid, size;
+	uint32_t pid, size;
 	uint8_t *buf;
 	const uint8_t *data;
 
@@ -337,6 +347,7 @@ static void usb_control(uint32_t stat)
 		table[index(0, TX, ODD)].desc = 0;
 		// first IN after Setup is always DATA1
 		ep0_tx_data_toggle = 1;
+
 #if 0
 		serial_print("bmRequestType:");
 		serial_phex(setup.bmRequestType);
@@ -358,8 +369,9 @@ static void usb_control(uint32_t stat)
 	case 0x01:  // OUT transaction received from host
 	case 0x02:
 		//serial_print("PID=OUT\n");
-#if defined(CDC_RX_ENDPOINT) && defined(CDC_TX_ENDPOINT)
+#ifdef CDC_STATUS_INTERFACE
 		if (setup.wRequestAndType == 0x2021 /*CDC_SET_LINE_CODING*/) {
+			int i;
 			uint8_t *dst = usb_cdc_line_coding;
 			//serial_print("set line coding ");
 			for (i=0; i<7; i++) {
@@ -369,6 +381,19 @@ static void usb_control(uint32_t stat)
 			//serial_phex32(*(uint32_t *)usb_cdc_line_coding);
 			//serial_print("\n");
 			if (*(uint32_t *)usb_cdc_line_coding == 134) usb_reboot_timer = 15;
+			endpoint0_transmit(NULL, 0);
+		}
+#endif
+#ifdef KEYBOARD_INTERFACE
+		if (setup.word1 == 0x02000921 && setup.word2 == ((1<<16)|KEYBOARD_INTERFACE)) {
+			keyboard_leds = buf[0];
+			endpoint0_transmit(NULL, 0);
+		}
+#endif
+#ifdef SEREMU_INTERFACE
+		if (setup.word1 == 0x03000921 && setup.word2 == ((4<<16)|SEREMU_INTERFACE)
+		  && buf[0] == 0xA9 && buf[1] == 0x45 && buf[2] == 0xC2 && buf[3] == 0x6B) {
+			usb_reboot_timer = 5;
 			endpoint0_transmit(NULL, 0);
 		}
 #endif
@@ -586,8 +611,6 @@ void _reboot_Teensyduino_(void)
 	asm volatile("bkpt");
 }
 
-// TODO: should be defined in a header?
-extern void usb_flush_callback(void);
 
 
 void usb_isr(void)
@@ -608,11 +631,18 @@ void usb_isr(void)
 				usb_reboot_timer = --t;
 				if (!t) _reboot_Teensyduino_();
 			}
-#if defined(CDC_TX_ENDPOINT)
+#ifdef CDC_DATA_INTERFACE
 			t = usb_cdc_transmit_flush_timer;
 			if (t) {
 				usb_cdc_transmit_flush_timer = --t;
-				if (t == 0) usb_flush_callback();
+				if (t == 0) usb_serial_flush_callback();
+			}
+#endif
+#if SEREMU_INTERFACE
+			t = usb_seremu_transmit_flush_timer;
+			if (t) {
+				usb_seremu_transmit_flush_timer = --t;
+				if (t == 0) usb_seremu_flush_callback();
 			}
 #endif
 		}

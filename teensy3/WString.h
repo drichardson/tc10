@@ -26,8 +26,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <ctype.h>
-//#include <avr/pgmspace.h>
-#include "nonstd.h"
+#include "avr_functions.h"
 
 // When compiling programs with this class, the following gcc parameters
 // dramatically increase performance and memory (RAM) efficiency, typically
@@ -39,7 +38,7 @@
 // modified by Mikal Hart for his FlashString library
 class __FlashStringHelper;
 #ifndef F
-#define F(string_literal) (reinterpret_cast<__FlashStringHelper *>(PSTR(string_literal)))
+#define F(string_literal) ((const __FlashStringHelper *)(string_literal))
 #endif
 
 // An inherited class for holding the result of a concatenation.  These
@@ -51,7 +50,7 @@ class String
 {
 public:
 	// constructors
-	String(const char *cstr = NULL);
+	String(const char *cstr = (const char *)NULL);
 	String(const __FlashStringHelper *pgmstr);
 	String(const String &str);
 	#ifdef __GXX_EXPERIMENTAL_CXX0X__

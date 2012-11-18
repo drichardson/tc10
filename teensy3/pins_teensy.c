@@ -1,7 +1,6 @@
-
 #include "core_pins.h"
 #include "pins_arduino.h"
-#include "serial.h"
+#include "HardwareSerial.h"
 
 #if 0
 // moved to pins_arduino.h
@@ -76,7 +75,7 @@ volatile static voidFuncPtr intFunc[CORE_NUM_DIGITAL];
 
 void init_pin_interrupts(void)
 {
-	SIM_SCGC5 = 0x00043F82;		// clocks active to all GPIO
+	//SIM_SCGC5 = 0x00043F82;		// clocks active to all GPIO
 	NVIC_ENABLE_IRQ(IRQ_PORTA);
 	NVIC_ENABLE_IRQ(IRQ_PORTB);
 	NVIC_ENABLE_IRQ(IRQ_PORTC);
@@ -195,7 +194,7 @@ void porte_isr(void)
 
 
 
-
+#if 0
 
 
 #define MIN_PULSE_WIDTH       544     // the shortest pulse sent to a servo  
@@ -281,10 +280,11 @@ void pdb_isr(void)
 	}
 }
 
+#endif
 
 
 static uint32_t tone_toggle_count;
-static uint8_t *tone_reg;
+static volatile uint8_t *tone_reg;
 static uint8_t tone_pin;
 
 
@@ -356,14 +356,108 @@ void noTone(uint8_t pin)
 	__enable_irq();
 }
 
+unsigned long rtc_get(void)
+{
+	return RTC_TSR;
+}
+
+void rtc_set(unsigned long t)
+{
+	RTC_SR = 0;
+	RTC_TPR = 0;
+	RTC_TSR = t;
+	RTC_SR = RTC_SR_TCE;
+}
+
+
+// adjust is the amount of crystal error to compensate, 1 = 0.1192 ppm
+// For example, adjust = -100 is slows the clock by 11.92 ppm
+//
+void rtc_compensate(int adjust)
+{
+	uint32_t comp, interval, tcr;
+
+	// This simple approach tries to maximize the interval.
+	// Perhaps minimizing TCR would be better, so the
+	// compensation is distributed more evenly across
+	// many seconds, rather than saving it all up and then
+	// altering one second up to +/- 0.38%
+	if (adjust >= 0) {
+		comp = adjust;
+		interval = 256;
+		while (1) {
+			tcr = comp * interval;
+			if (tcr < 128*256) break;
+			if (--interval == 1) break;
+		}
+		tcr = tcr >> 8;
+	} else {
+		comp = -adjust;
+		interval = 256;
+		while (1) {
+			tcr = comp * interval;
+			if (tcr < 129*256) break;
+			if (--interval == 1) break;
+		}
+		tcr = tcr >> 8;
+		tcr = 256 - tcr;
+	}
+	RTC_TCR = ((interval - 1) << 8) | tcr;
+}
+
+#if 0
+// TODO: build system should define this
+// so RTC is automatically initialized to approx correct time
+// at least when the program begins running right after upload
+#ifndef TIME_T
+#define TIME_T 1350160272
+#endif
+
+void init_rtc(void)
+{
+	serial_print("init_rtc\n");
+	//SIM_SCGC6 |= SIM_SCGC6_RTC;
+
+	// enable the RTC crystal oscillator, for approx 12pf crystal
+	if (!(RTC_CR & RTC_CR_OSCE)) {
+		serial_print("start RTC oscillator\n");
+		RTC_SR = 0;
+		RTC_CR = RTC_CR_SC16P | RTC_CR_SC4P | RTC_CR_OSCE;
+	}
+	// should wait for crystal to stabilize.....
+
+	serial_print("SR=");
+	serial_phex32(RTC_SR);
+	serial_print("\n");
+	serial_print("CR=");
+	serial_phex32(RTC_CR);
+	serial_print("\n");
+	serial_print("TSR=");
+	serial_phex32(RTC_TSR);
+	serial_print("\n");
+	serial_print("TCR=");
+	serial_phex32(RTC_TCR);
+	serial_print("\n");
+
+	if (RTC_SR & RTC_SR_TIF) {
+		// enable the RTC
+		RTC_SR = 0;
+		RTC_TPR = 0;
+		RTC_TSR = TIME_T;
+		RTC_SR = RTC_SR_TCE;
+	}
+}
+#endif
+
+extern void usb_init(void);
 
 //void init_pins(void)
 void _init_Teensyduino_internal_(void)
 {
 	init_pin_interrupts();
 
-	SIM_SCGC6 |= SIM_SCGC6_FTM0;	// TODO: use bitband for atomic read-mod-write
-	SIM_SCGC6 |= SIM_SCGC6_FTM1;
+	//SIM_SCGC6 |= SIM_SCGC6_FTM0;	// TODO: use bitband for atomic read-mod-write
+	//SIM_SCGC6 |= SIM_SCGC6_FTM1;
 	FTM0_CNT = 0;
 	FTM0_MOD = 32767;
 	FTM0_C0SC = 0x28; // MSnB:MSnA = 10, ELSnB:ELSnA = 10
@@ -382,9 +476,9 @@ void _init_Teensyduino_internal_(void)
 	FTM1_SC = FTM_SC_CLKS(1) | FTM_SC_PS(0);
 
 	analog_init();
-	init_servo();
+	//init_servo();
 	init_tone();
-	delay(100); // TODO: this is not necessary, right?
+	//delay(100); // TODO: this is not necessary, right?
 	usb_init();
 }
 
@@ -577,13 +671,9 @@ uint8_t shiftIn_msbFirst(uint8_t dataPin, uint8_t clockPin)
 
 
 
-// the millis counter... not "timer0" anymore, but keeping Teensy 2.0 name
-volatile uint32_t timer0_millis_count __attribute__ ((aligned (4))) = 0;
+// the systick interrupt is supposed to increment this at 1 kHz rate
+volatile uint32_t systick_millis_count = 0;
 
-void systick_isr(void)
-{
-	timer0_millis_count++;
-}
 
 uint32_t micros(void)
 {
@@ -591,7 +681,7 @@ uint32_t micros(void)
 
 	__disable_irq();
 	current = SYST_CVR;
-	count = timer0_millis_count;
+	count = systick_millis_count;
 	istatus = SCB_ICSR;	// bit 26 indicates if systick exception pending
 	__enable_irq();
 	if ((istatus & SCB_ICSR_PENDSTSET) && current > ((F_CPU / 1000) - 50)) count++;
@@ -603,11 +693,13 @@ void delay(uint32_t ms)
 {
 	uint32_t start = micros();
 
-	while (ms > 0) {
+	while (1) {
 		if ((micros() - start) >= 1000) {
 			ms--;
+			if (ms == 0) break;
 			start += 1000;
 		}
+		yield();
 	}
 }
 

@@ -12,90 +12,9 @@ extern unsigned long _estack;
 //extern void __init_array_end(void);
 extern int main (void);
 void ResetHandler(void);
+void _init_Teensyduino_internal_(void);
+void __libc_init_array(void);
 
-void usb_isr(void);
-void systick_isr(void);
-void pdb_isr(void);
-void pit3_isr(void);
-
-void porta_isr(void);
-void portb_isr(void);
-void portc_isr(void);
-void portd_isr(void);
-void porte_isr(void);
-
-void fault_isr(void);
-void unused_isr(void);
-
-
-// TODO: create AVR-stype ISR() macro, with default linkage to undefined handler
-//
-__attribute__ ((section(".vectors"), used))
-void (* const gVectors[])(void) =
-{
-        (void (*)(void))((unsigned long)&_estack),	//  0 ARM: Initial Stack Pointer
-        ResetHandler,					//  1 ARM: Initial Program Counter
-	fault_isr,					//  2 ARM: Non-maskable Interrupt (NMI)
-	fault_isr,					//  3 ARM: Hard Fault
-	fault_isr,					//  4 ARM: MemManage Fault
-	fault_isr,					//  5 ARM: Bus Fault
-	fault_isr,					//  6 ARM: Usage Fault
-	fault_isr,					//  7 --
-	fault_isr,					//  8 --
-	fault_isr,					//  9 --
-	fault_isr,					// 10 --
-	fault_isr,					// 11 ARM: Supervisor call (SVCall)
-	fault_isr,					// 12 ARM: Debug Monitor
-	fault_isr,					// 13 --
-	fault_isr,					// 14 ARM: Pendable req serv(PendableSrvReq)
-	systick_isr,					// 15 ARM: System tick timer (SysTick)
-	unused_isr,					// 16 DMA channel 0 transfer complete
-	unused_isr,					// 17 DMA channel 1 transfer complete
-	unused_isr,					// 18 DMA channel 2 transfer complete
-	unused_isr,					// 19 DMA channel 3 transfer complete
-	unused_isr,					// 20 DMA error interrupt channel
-	unused_isr,					// 21 DMA --
-	unused_isr,					// 22 Flash Memory Command complete
-	unused_isr,					// 23 Read collision
-	unused_isr,					// 24 Low-voltage detect/warning
-	unused_isr,					// 25 Low Leakage Wakeup
-	unused_isr,					// 26 Both EWM and WDOG interrupt
-	unused_isr,					// 27 I2C
-	unused_isr,					// 28 SPI
-	unused_isr,					// 29 I2S Transmit
-	unused_isr,					// 30 I2S Receive
-	unused_isr,					// 31 UART0 CEA709.1-B (LON) status
-	unused_isr,					// 32 UART0 status
-	unused_isr,					// 33 UART0 error
-	unused_isr,					// 34 UART1 status
-	unused_isr,					// 35 UART1 error
-	unused_isr,					// 36 UART2 status
-	unused_isr,					// 37 UART2 error
-	unused_isr,					// 38 ADC0
-	unused_isr,					// 39 CMP0
-	unused_isr,					// 40 CMP1
-	unused_isr,					// 41 FTM0
-	unused_isr,					// 42 FTM1
-	unused_isr,					// 43 CMT
-	unused_isr,					// 44 RTC Alarm interrupt
-	unused_isr,					// 45 RTC Seconds interrupt
-	unused_isr,					// 46 PIT Channel 0
-	unused_isr,					// 47 PIT Channel 1
-	unused_isr,					// 48 PIT Channel 2
-	pit3_isr,					// 49 PIT Channel 3
-	pdb_isr,					// 50 PDB Programmable Delay Block
-	usb_isr,					// 51 USB OTG
-	unused_isr,					// 52 USB Charger Detect
-	unused_isr,					// 53 TSI
-	unused_isr,					// 54 MCG
-	unused_isr,					// 55 Low Power Timer
-	porta_isr,					// 56 Pin detect (Port A)
-	portb_isr,					// 57 Pin detect (Port B)
-	portc_isr,					// 58 Pin detect (Port C)
-	portd_isr,					// 59 Pin detect (Port D)
-	porte_isr,					// 60 Pin detect (Port E)
-	unused_isr,					// 61 Software interrupt
-};
 
 void fault_isr(void)
 {
@@ -107,6 +26,138 @@ void unused_isr(void)
         while (1); // die
 }
 
+extern volatile uint32_t systick_millis_count;
+void systick_default_isr(void)
+{
+	systick_millis_count++;
+}
+
+void nmi_isr(void)		__attribute__ ((weak, alias("unused_isr")));
+void hard_fault_isr(void)	__attribute__ ((weak, alias("unused_isr")));
+void memmanage_fault_isr(void)	__attribute__ ((weak, alias("unused_isr")));
+void bus_fault_isr(void)	__attribute__ ((weak, alias("unused_isr")));
+void usage_fault_isr(void)	__attribute__ ((weak, alias("unused_isr")));
+void svcall_isr(void)		__attribute__ ((weak, alias("unused_isr")));
+void debugmonitor_isr(void)	__attribute__ ((weak, alias("unused_isr")));
+void pendablesrvreq_isr(void)	__attribute__ ((weak, alias("unused_isr")));
+void systick_isr(void)		__attribute__ ((weak, alias("systick_default_isr")));
+
+void dma_ch0_isr(void)		__attribute__ ((weak, alias("unused_isr")));
+void dma_ch1_isr(void)		__attribute__ ((weak, alias("unused_isr")));
+void dma_ch2_isr(void)		__attribute__ ((weak, alias("unused_isr")));
+void dma_ch3_isr(void)		__attribute__ ((weak, alias("unused_isr")));
+void dma_error_isr(void)	__attribute__ ((weak, alias("unused_isr")));
+void flash_cmd_isr(void)	__attribute__ ((weak, alias("unused_isr")));
+void flash_error_isr(void)	__attribute__ ((weak, alias("unused_isr")));
+void low_voltage_isr(void)	__attribute__ ((weak, alias("unused_isr")));
+void wakeup_isr(void)		__attribute__ ((weak, alias("unused_isr")));
+void watchdog_isr(void)		__attribute__ ((weak, alias("unused_isr")));
+void i2c0_isr(void)		__attribute__ ((weak, alias("unused_isr")));
+void spi0_isr(void)		__attribute__ ((weak, alias("unused_isr")));
+void i2s0_tx_isr(void)		__attribute__ ((weak, alias("unused_isr")));
+void i2s0_rx_isr(void)		__attribute__ ((weak, alias("unused_isr")));
+void uart0_lon_isr(void)	__attribute__ ((weak, alias("unused_isr")));
+void uart0_status_isr(void)	__attribute__ ((weak, alias("unused_isr")));
+void uart0_error_isr(void)	__attribute__ ((weak, alias("unused_isr")));
+void uart1_status_isr(void)	__attribute__ ((weak, alias("unused_isr")));
+void uart1_error_isr(void)	__attribute__ ((weak, alias("unused_isr")));
+void uart2_status_isr(void)	__attribute__ ((weak, alias("unused_isr")));
+void uart2_error_isr(void)	__attribute__ ((weak, alias("unused_isr")));
+void adc0_isr(void)		__attribute__ ((weak, alias("unused_isr")));
+void cmp0_isr(void)		__attribute__ ((weak, alias("unused_isr")));
+void cmp1_isr(void)		__attribute__ ((weak, alias("unused_isr")));
+void ftm0_isr(void)		__attribute__ ((weak, alias("unused_isr")));
+void ftm1_isr(void)		__attribute__ ((weak, alias("unused_isr")));
+void cmt_isr(void)		__attribute__ ((weak, alias("unused_isr")));
+void rtc_alarm_isr(void)	__attribute__ ((weak, alias("unused_isr")));
+void rtc_seconds_isr(void)	__attribute__ ((weak, alias("unused_isr")));
+void pit0_isr(void)		__attribute__ ((weak, alias("unused_isr")));
+void pit1_isr(void)		__attribute__ ((weak, alias("unused_isr")));
+void pit2_isr(void)		__attribute__ ((weak, alias("unused_isr")));
+void pit3_isr(void)		__attribute__ ((weak, alias("unused_isr")));
+void pdb_isr(void)		__attribute__ ((weak, alias("unused_isr")));
+void usb_isr(void)		__attribute__ ((weak, alias("unused_isr")));
+void usb_charge_isr(void)	__attribute__ ((weak, alias("unused_isr")));
+void tsi0_isr(void)		__attribute__ ((weak, alias("unused_isr")));
+void mcg_isr(void)		__attribute__ ((weak, alias("unused_isr")));
+void lptmr_isr(void)		__attribute__ ((weak, alias("unused_isr")));
+void porta_isr(void)		__attribute__ ((weak, alias("unused_isr")));
+void portb_isr(void)		__attribute__ ((weak, alias("unused_isr")));
+void portc_isr(void)		__attribute__ ((weak, alias("unused_isr")));
+void portd_isr(void)		__attribute__ ((weak, alias("unused_isr")));
+void porte_isr(void)		__attribute__ ((weak, alias("unused_isr")));
+void software_isr(void)		__attribute__ ((weak, alias("unused_isr")));
+
+
+// TODO: create AVR-stype ISR() macro, with default linkage to undefined handler
+//
+__attribute__ ((section(".vectors"), used))
+void (* const gVectors[])(void) =
+{
+        (void (*)(void))((unsigned long)&_estack),	//  0 ARM: Initial Stack Pointer
+        ResetHandler,					//  1 ARM: Initial Program Counter
+	nmi_isr,					//  2 ARM: Non-maskable Interrupt (NMI)
+	hard_fault_isr,					//  3 ARM: Hard Fault
+	memmanage_fault_isr,				//  4 ARM: MemManage Fault
+	bus_fault_isr,					//  5 ARM: Bus Fault
+	usage_fault_isr,				//  6 ARM: Usage Fault
+	fault_isr,					//  7 --
+	fault_isr,					//  8 --
+	fault_isr,					//  9 --
+	fault_isr,					// 10 --
+	svcall_isr,					// 11 ARM: Supervisor call (SVCall)
+	debugmonitor_isr,				// 12 ARM: Debug Monitor
+	fault_isr,					// 13 --
+	pendablesrvreq_isr,				// 14 ARM: Pendable req serv(PendableSrvReq)
+	systick_isr,					// 15 ARM: System tick timer (SysTick)
+	dma_ch0_isr,					// 16 DMA channel 0 transfer complete
+	dma_ch1_isr,					// 17 DMA channel 1 transfer complete
+	dma_ch2_isr,					// 18 DMA channel 2 transfer complete
+	dma_ch3_isr,					// 19 DMA channel 3 transfer complete
+	dma_error_isr,					// 20 DMA error interrupt channel
+	unused_isr,					// 21 DMA --
+	flash_cmd_isr,					// 22 Flash Memory Command complete
+	flash_error_isr,				// 23 Flash Read collision
+	low_voltage_isr,				// 24 Low-voltage detect/warning
+	wakeup_isr,					// 25 Low Leakage Wakeup
+	watchdog_isr,					// 26 Both EWM and WDOG interrupt
+	i2c0_isr,					// 27 I2C0
+	spi0_isr,					// 28 SPI0
+	i2s0_tx_isr,					// 29 I2S0 Transmit
+	i2s0_rx_isr,					// 30 I2S0 Receive
+	uart0_lon_isr,					// 31 UART0 CEA709.1-B (LON) status
+	uart0_status_isr,				// 32 UART0 status
+	uart0_error_isr,				// 33 UART0 error
+	uart1_status_isr,				// 34 UART1 status
+	uart1_error_isr,				// 35 UART1 error
+	uart2_status_isr,				// 36 UART2 status
+	uart2_error_isr,				// 37 UART2 error
+	adc0_isr,					// 38 ADC0
+	cmp0_isr,					// 39 CMP0
+	cmp1_isr,					// 40 CMP1
+	ftm0_isr,					// 41 FTM0
+	ftm1_isr,					// 42 FTM1
+	cmt_isr,					// 43 CMT
+	rtc_alarm_isr,					// 44 RTC Alarm interrupt
+	rtc_seconds_isr,				// 45 RTC Seconds interrupt
+	pit0_isr,					// 46 PIT Channel 0
+	pit1_isr,					// 47 PIT Channel 1
+	pit2_isr,					// 48 PIT Channel 2
+	pit3_isr,					// 49 PIT Channel 3
+	pdb_isr,					// 50 PDB Programmable Delay Block
+	usb_isr,					// 51 USB OTG
+	usb_charge_isr,					// 52 USB Charger Detect
+	tsi0_isr,					// 53 TSI0
+	mcg_isr,					// 54 MCG
+	lptmr_isr,					// 55 Low Power Timer
+	porta_isr,					// 56 Pin detect (Port A)
+	portb_isr,					// 57 Pin detect (Port B)
+	portc_isr,					// 58 Pin detect (Port C)
+	portd_isr,					// 59 Pin detect (Port D)
+	porte_isr,					// 60 Pin detect (Port E)
+	software_isr,					// 61 Software interrupt
+};
+
 //void usb_isr(void)
 //{
 //}
@@ -117,19 +168,43 @@ const uint8_t flashconfigbytes[16] = {
 	0xFF, 0xFF, 0xFF, 0xFF, 0xFE, 0xFF, 0xFF, 0xFF
 };
 
-//void init_pins(void);
+
+// Automatically initialize the RTC.  When the build defines the compile
+// time, and the user has added a crystal, the RTC will automatically
+// begin at the time of the first upload.
+#ifndef TIME_T
+#define TIME_T 1349049600 // default 1 Oct 2012
+#endif
+extern void rtc_set(unsigned long t);
+
+
+
+void startup_unused_hook(void) {}
+void startup_early_hook(void)		__attribute__ ((weak, alias("startup_unused_hook")));
+void startup_late_hook(void)		__attribute__ ((weak, alias("startup_unused_hook")));
+
 
 __attribute__ ((section(".startup")))
 void ResetHandler(void)
 {
         uint32_t *src = &_etext;
         uint32_t *dest = &_sdata;
-	//void (* ptr)(void);
 
 	WDOG_UNLOCK = WDOG_UNLOCK_SEQ1;
 	WDOG_UNLOCK = WDOG_UNLOCK_SEQ2;
 	WDOG_STCTRLH = WDOG_STCTRLH_ALLOWUPDATE;
+	startup_early_hook();
 
+	// enable clocks to always-used peripherals
+	SIM_SCGC5 = 0x00043F82;		// clocks active to all GPIO
+	SIM_SCGC6 = SIM_SCGC6_RTC | SIM_SCGC6_FTM0 | SIM_SCGC6_FTM1 | SIM_SCGC6_ADC0 | SIM_SCGC6_FTFL;
+	// if the RTC oscillator isn't enabled, get it started early
+	if (!(RTC_CR & RTC_CR_OSCE)) {
+		RTC_SR = 0;
+		RTC_CR = RTC_CR_SC16P | RTC_CR_SC4P | RTC_CR_OSCE;
+	}
+
+	// TODO: do this while the PLL is waiting to lock....
         while (dest < &_edata) *dest++ = *src++;
         dest = &_sbss;
         while (dest < &_ebss) *dest++ = 0;
@@ -187,6 +262,8 @@ void ResetHandler(void)
 	//init_pins();
 	__enable_irq();
 
+	_init_Teensyduino_internal_();
+	if (RTC_SR & RTC_SR_TIF) rtc_set(TIME_T);
 
 	__libc_init_array();
 
@@ -195,7 +272,7 @@ void ResetHandler(void)
 		(*ptr)();
 	}
 */
-
+	startup_late_hook();
         main();
         while (1) ;
 }

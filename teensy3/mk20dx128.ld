@@ -4,6 +4,7 @@ MEMORY
 	RAM  (rwx) : ORIGIN = 0x1FFFE000, LENGTH = 16K
 }
 
+
 SECTIONS
 {
 	.text : {
@@ -25,8 +26,14 @@ SECTIONS
 		KEEP (*(SORT(.init_array.*)))
 		KEEP (*(.init_array))
 		__init_array_end = .;
-		_etext = .;
 	} > FLASH = 0xFF
+
+	.ARM.exidx : {
+		__exidx_start = .;
+		*(.ARM.exidx* .gnu.linkonce.armexidx.*)
+		__exidx_end = .;
+	} > FLASH
+	_etext = .;
 
 	.usbdescriptortable (NOLOAD) : {
 		/* . = ORIGIN(RAM); */
@@ -55,6 +62,7 @@ SECTIONS
 		. = ALIGN(4);
 		_sbss = .; 
 		*(.bss*)
+		*(COMMON)
 		. = ALIGN(4);
 		_ebss = .;   
 	} > RAM

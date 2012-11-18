@@ -51,8 +51,15 @@ extern const struct digital_pin_bitband_and_config_table_struct digital_pin_to_i
 #define portModeRegister(pin)   ((volatile uint8_t *)(digital_pin_to_info_PGM[(pin)].reg + 160))
 #define portConfigRegister(pin) ((volatile uint32_t *)(digital_pin_to_info_PGM[(pin)].config))
 
-
-
+#define NOT_ON_TIMER 0
+static inline uint8_t digitalPinToTimer(uint8_t) __attribute__((always_inline, unused));
+static inline uint8_t digitalPinToTimer(uint8_t pin)
+{
+	if (pin >= 3 && pin <= 6) return pin - 2;
+	if (pin >= 9 && pin <= 10) return pin - 4;
+	if (pin >= 20 && pin <= 23) return pin - 13;
+	return NOT_ON_TIMER;
+}
 
 
 

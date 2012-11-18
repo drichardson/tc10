@@ -31,7 +31,6 @@
 #include "binary.h"
 #include "core_id.h"
 #include "core_pins.h"
-#include "eeprom.h"
 
 #ifdef __cplusplus
 extern "C"{
@@ -46,19 +45,15 @@ extern "C"{
 #define DEG_TO_RAD 0.017453292519943295769236907684886
 #define RAD_TO_DEG 57.295779513082320876798154814105
 
+#ifndef M_PI
+#define M_PI 3.1415926535897932384626433832795
+#endif
+#ifndef M_SQRT2
+#define M_SQRT2 1.4142135623730950488016887
+#endif
+
 #define SERIAL  0
 #define DISPLAY 1
-
-//#define CHANGE 1
-//#define FALLING 2
-//#define RISING 3
-
-// defined in analog.h
-//#define INTERNAL 3
-//#define INTERNAL2V56 3
-//#define INTERNAL1V2 3
-//#define DEFAULT 1
-//#define EXTERNAL 0
 
 // undefine stdlib's abs if encountered
 #ifdef abs
