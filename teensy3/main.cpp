@@ -67,8 +67,17 @@ static void setFutabaMC230CRSpeed(void)
 // PWM signals are aligned with the beginning of the period, which is the same for all
 // channels within an FTM.
 // END FROM THE DOCUMENT
-static void setFutabaS3003Servo(void)
+static void setFutabaS3003Servo(float fromCenterClamped)
 {
+	if ( fromCenterClamped > 1.0 )
+	{
+		fromCenterClamped = 1.0;
+	}
+	else if ( fromCenterClamped < -1.0 )
+	{
+		fromCenterClamped = -1.0;
+	}
+
 	// From: http://mcu-programming.blogspot.com/2006/09/servo-motor-control.html
 	// - Want 20ms period
 	// From: Introduction to Servomotor Programming
@@ -94,7 +103,7 @@ static void setFutabaS3003Servo(void)
 	// Duty cycle is determined by (CnV − CNTIN)
 	// NOTE: The duty cycle must be inverted because of the PNP transistor on the open collector of the
 	// Hex Buffer driver I'm using.
-	FTM0_C7V = 60000 - 4500; // center
+	FTM0_C7V = 60000 - (4500 + (1500.0 * fromCenterClamped)); // center
 	//FTM0_C7V = 60000 - 6000; // left (because it's inverted)
 	//FTM0_C7V = 60000 - 3000; // right (because it's inverted)
 	//FTM0_C7V = 60000 - (4500 - 500);
@@ -112,7 +121,7 @@ extern "C" int main(void)
 	// For example:
 
 	setFutabaMC230CRSpeed();
-	setFutabaS3003Servo();
+	setFutabaS3003Servo(0);
 
 	pinMode(13, OUTPUT);
 	int i = 0;
@@ -122,6 +131,26 @@ extern "C" int main(void)
 		delay(500);
 		digitalWriteFast(13, LOW);
 		delay(500);
+
+		switch(i)
+		{
+		case 5:
+			setFutabaS3003Servo(-1.0);
+			break;
+		case 6:
+			setFutabaS3003Servo(1.0);
+			break;
+		case 7:
+			setFutabaS3003Servo(0);
+			break;
+		case 8:
+			setFutabaS3003Servo(0.2);
+			break;
+		case 9:
+			setFutabaS3003Servo(0.4);
+			break;
+
+		}
 	}
 }
 
