@@ -111,7 +111,7 @@ extern "C" int main(void)
 	// To use Teensy 3.0 without Arduino, simply put your code here.
 	// For example:
 
-	//setFutabaMC230CRSpeed();
+	setFutabaMC230CRSpeed();
 	setFutabaS3003Servo();
 
 	pinMode(13, OUTPUT);
