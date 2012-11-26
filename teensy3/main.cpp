@@ -93,9 +93,6 @@ static void setFutabaMC230CRSpeed(float speedClamped)
 	myprint("Changing speed to %d (from clamped %f)\n", speed, speedClamped);
 	FTM1_C0V = speed;
 
-	// TODO: Is this NEEDED more than once? If not, move into initialization routine.
-	CORE_PIN3_CONFIG = PORT_PCR_MUX(3) | PORT_PCR_DSE | PORT_PCR_SRE; // from pins_teensy.c
-
 #else
 #error need configuration for F_CPU
 #endif
@@ -143,9 +140,6 @@ static void setFutabaS3003Servo(float fromCenterClamped)
 	//FTM0_C7V = 60000 - 6000; // left (because it's inverted)
 	//FTM0_C7V = 60000 - 3000; // right (because it's inverted)
 	//FTM0_C7V = 60000 - (4500 - 500);
-
-	// TODO: Is this NEEDED more than once? If not, move into initialization routine.
-	CORE_PIN5_CONFIG = PORT_PCR_MUX(4) | PORT_PCR_DSE | PORT_PCR_SRE; // from pins_teensy.c
 
 #else
 #error need configuration for F_CPU
@@ -211,6 +205,12 @@ static void loop_initialization(void)
 	pinMode(3, OUTPUT); // PWM to speed controller
 	pinMode(5, OUTPUT); // PWM to steering servo
 	pinMode(13, OUTPUT); // Teensy LED
+
+	// Configure pin 3. I don't know what this does, I just stole it from pins_teensy.c
+	CORE_PIN3_CONFIG = PORT_PCR_MUX(3) | PORT_PCR_DSE | PORT_PCR_SRE; // from pins_teensy.c
+
+	// Configure pin 5. I don't know what this does, I just stole it from pins_teensy.c
+	CORE_PIN5_CONFIG = PORT_PCR_MUX(4) | PORT_PCR_DSE | PORT_PCR_SRE; // from pins_teensy.c
 
 	setFutabaMC230CRSpeed(0);
 	setFutabaS3003Servo(0);
