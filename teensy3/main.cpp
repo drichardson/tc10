@@ -12,6 +12,20 @@ static void myprint(const char* msg, ...)
 	va_end(va);
 }
 
+inline static float clamp(float val)
+{
+	if ( val > 1 )
+	{
+		val = 1;
+	}
+	else if ( val < -1 )
+	{
+		val = -1;
+	}
+
+	return val;
+}
+
 // Edge Aligned PWM. Section 35.4.6 in K20 Sub-Family Reference Manual, Rev. 2, Feb 2012
 // FROM THE DOCUMENT
 // The EPWM period is determined by (MOD − CNTIN + 0x0001) and the pulse
@@ -22,13 +36,14 @@ static void myprint(const char* msg, ...)
 // PWM signals are aligned with the beginning of the period, which is the same for all
 // channels within an FTM.
 // END FROM THE DOCUMENT
-static void setFutabaMC230CRSpeed(void)
+static void setFutabaMC230CRSpeed(float speedClamped)
 {
+	speedClamped = clamp(speedClamped);
+
 	// The Speed controller wants a frequency of 1500Hz.
 
 	// MC230CR Speed Controller
 	// High Frequency:    Yes, 1,500Hz (a period of .000666667 seconds)
-	pinMode(3, OUTPUT);
 
 #if F_CPU == 48000000
 	// config divisors: 48 MHz core, 48 MHz bus, 24 MHz flash
@@ -45,11 +60,40 @@ static void setFutabaMC230CRSpeed(void)
 	// collector output on the SN7417N Hex Buffer/Driver. This is why decreasing the duty cycle
 	// on pin3 actually makes the speed controller go faster, since the speed controllers duty cycle
 	// is increasing.
-	FTM1_C0V = 35050; // barely turning
-	FTM1_C0V = 35040; // turning slowly
-	FTM1_C0V = 35020; // turning medium
-	FTM1_C0V = 35000; // turning medium fast
-	FTM1_C0V = 34900; // turning at what sounds like max speed
+
+	// Sounds like the the fastest the wheels are spinning.
+	// Lower values don't seem to increase the speed (only using hearing to measure)
+	const int MAX_SPEED = 36350;
+
+	// Moving but slow
+	const int MIN_SPEED = 36550;
+
+	const int STOPPED = 63000;
+
+	int speed = STOPPED;
+
+	if ( speedClamped == 0 )
+	{
+		// TODO: Implement breaking, not just turning the motor off. Not sure how to do this but accorinding to
+		// it's minimal data sheet, the speed controller can support breaking.
+		speed = STOPPED;
+	}
+	else if ( speedClamped > 0 )
+	{
+		const int SPEED_RANGE = MIN_SPEED - MAX_SPEED;
+		speed = MIN_SPEED - SPEED_RANGE * speedClamped;
+	}
+	else if ( speedClamped < 0 )
+	{
+		// TODO: Reverse not yet implemented. According to data sheet, it does implement reverse if in the
+		// correct mode.
+		speed = STOPPED;
+	}
+
+	myprint("Changing speed to %d (from clamped %f)\n", speed, speedClamped);
+	FTM1_C0V = speed;
+
+	// TODO: Is this NEEDED more than once? If not, move into initialization routine.
 	CORE_PIN3_CONFIG = PORT_PCR_MUX(3) | PORT_PCR_DSE | PORT_PCR_SRE; // from pins_teensy.c
 
 #else
@@ -69,20 +113,12 @@ static void setFutabaMC230CRSpeed(void)
 // END FROM THE DOCUMENT
 static void setFutabaS3003Servo(float fromCenterClamped)
 {
-	if ( fromCenterClamped > 1.0 )
-	{
-		fromCenterClamped = 1.0;
-	}
-	else if ( fromCenterClamped < -1.0 )
-	{
-		fromCenterClamped = -1.0;
-	}
+	fromCenterClamped = clamp(fromCenterClamped);
 
 	// From: http://mcu-programming.blogspot.com/2006/09/servo-motor-control.html
 	// - Want 20ms period
 	// From: Introduction to Servomotor Programming
 	// - 1.0ms is one side (for a futaba S3004, not the S3003 I have) and 2.0ms is the other. 1.5ms is center.
-	pinMode(5, OUTPUT);
 
 #if F_CPU == 48000000
 	// config divisors: 48 MHz core, 48 MHz bus, 24 MHz flash
@@ -108,6 +144,7 @@ static void setFutabaS3003Servo(float fromCenterClamped)
 	//FTM0_C7V = 60000 - 3000; // right (because it's inverted)
 	//FTM0_C7V = 60000 - (4500 - 500);
 
+	// TODO: Is this NEEDED more than once? If not, move into initialization routine.
 	CORE_PIN5_CONFIG = PORT_PCR_MUX(4) | PORT_PCR_DSE | PORT_PCR_SRE; // from pins_teensy.c
 
 #else
@@ -115,42 +152,86 @@ static void setFutabaS3003Servo(float fromCenterClamped)
 #endif
 }
 
-extern "C" int main(void)
+// TODO: Generalize loop_XHz. Perhap use a real time run loop that has timing information
+// loop function, and initialization function, and context.
+
+// About a 1Hz loop, depending on what everyone else is doing.
+static void loop_1Hz(void)
 {
-	// To use Teensy 3.0 without Arduino, simply put your code here.
-	// For example:
+	// TODO: Don't keep track of seconds... what about rollover? Perhaps that's not possible
+	// with seconds and a battery, but what about higher frequency loops  using this technique.
 
-	setFutabaMC230CRSpeed();
-	setFutabaS3003Servo(0);
+	static int seconds = 0;
+	seconds++;
 
-	pinMode(13, OUTPUT);
-	int i = 0;
-	while (1) {
-		myprint("ok: %d\n", i++);
-		digitalWriteFast(13, HIGH);
-		delay(500);
-		digitalWriteFast(13, LOW);
-		delay(500);
+	myprint("1Hz Loop: seconds: %d\n", seconds);
 
-		switch(i)
-		{
-		case 5:
-			setFutabaS3003Servo(-1.0);
-			break;
-		case 6:
-			setFutabaS3003Servo(1.0);
-			break;
-		case 7:
-			setFutabaS3003Servo(0);
-			break;
-		case 8:
-			setFutabaS3003Servo(0.2);
-			break;
-		case 9:
-			setFutabaS3003Servo(0.4);
-			break;
-
-		}
+	switch(seconds)
+	{
+	case 2:
+		setFutabaMC230CRSpeed(1);
+		break;
+	case 4:
+		setFutabaMC230CRSpeed(0.5);
+		break;
+	case 5:
+		setFutabaS3003Servo(-1.0);
+		break;
+	case 6:
+		setFutabaS3003Servo(1.0);
+		setFutabaMC230CRSpeed(0.0);
+		break;
+	case 7:
+		setFutabaS3003Servo(0);
+		break;
+	case 8:
+		setFutabaS3003Servo(0.2);
+		break;
+	case 9:
+		setFutabaS3003Servo(0.4);
+		break;
 	}
 }
 
+static void loop_2Hz(void)
+{
+	// TODO: Don't keep track of half_seconds... what about rollover? Perhaps that's not possible
+	// with half_seconds and a battery, but what about higher frequency loops  using this technique.
+
+	static int half_seconds = 0;
+	half_seconds++;
+
+	myprint("2Hz Loop: seconds: %f\n", half_seconds / 2.0);
+
+	digitalWriteFast(13, half_seconds % 2 == 0 ? HIGH : LOW);
+}
+
+static void loop_initialization(void)
+{
+	pinMode(3, OUTPUT); // PWM to speed controller
+	pinMode(5, OUTPUT); // PWM to steering servo
+	pinMode(13, OUTPUT); // Teensy LED
+
+	setFutabaMC230CRSpeed(0);
+	setFutabaS3003Servo(0);
+}
+
+extern "C" int main(void)
+{
+	loop_initialization();
+
+	while (1) {
+
+		// TODO: Make loop_nHz loops be more accurate by adjusting the delay to account for
+		// processing time. It still won't be a gaurentee and it relies on all loop functions
+		// to be good non-blocking citizens, but it may create more predictable behavior.
+		
+		delay(500);
+		loop_2Hz();
+
+		delay(500);
+		loop_2Hz();
+		loop_1Hz();
+
+	}
+}
